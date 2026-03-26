@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIS26 — Insights & Recommendations</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F2EE;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE8;
+    --border: #E2DDD7;
+    --text: #1A1714;
+    --text2: #6B6560;
+    --text3: #9E9890;
+    --green: #2D6A4F;
+    --green-light: #E8F4EE;
+    --blue: #1D4E89;
+    --blue-light: #E8F0F9;
+    --amber: #B45309;
+    --amber-light: #FEF3C7;
+    --red: #9B2335;
+    --red-light: #FDEAED;
+    --purple: #5B21B6;
+    --purple-light: #EDE9FE;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+
+  .header { background: var(--text); color: #fff; padding: 36px 48px 32px; position: relative; overflow: hidden; }
+  .header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 320px; height: 320px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+  .header-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.5; margin-bottom: 8px; }
+  .header-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+  .header-title { font-family: 'DM Serif Display', serif; font-size: 38px; line-height: 1.05; color: #fff; }
+  .header-meta { text-align: right; opacity: 0.5; font-size: 12px; line-height: 1.9; }
+  .header-stats { display: flex; gap: 32px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .hs-num { font-family: 'DM Serif Display', serif; font-size: 30px; color: #fff; line-height: 1; }
+  .hs-label { font-size: 11px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+
+  .nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 48px; display: flex; gap: 0; position: sticky; top: 0; z-index: 100; overflow-x: auto; }
+  .nav-tab { padding: 14px 20px; font-size: 13px; font-weight: 500; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; }
+  .nav-tab:hover { color: var(--text2); }
+  .nav-tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+  .pane { display: none; padding: 36px 48px 56px; max-width: 1060px; }
+  .pane.active { display: block; }
+
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; margin-top: 32px; display: flex; align-items: center; gap: 8px; }
+  .section-label:first-child { margin-top: 0; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-sm { padding: 16px 18px; }
+  .card-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .card-value { font-family: 'DM Serif Display', serif; font-size: 34px; line-height: 1; color: var(--text); margin-bottom: 2px; }
+  .card-sub { font-size: 12px; color: var(--text3); }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 100px; }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-grey { background: var(--surface2); color: var(--text3); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+
+  .day-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .day-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .day-card.best { border-color: var(--green); background: linear-gradient(135deg, #fff 60%, var(--green-light)); }
+  .day-nps { font-family: 'DM Serif Display', serif; font-size: 42px; line-height: 1; margin-bottom: 12px; }
+  .day-name { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+  .progress-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .day-meta { font-size: 11px; color: var(--text3); }
+
+  .nps-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+  .nps-bar-full { display: flex; height: 26px; border-radius: 6px; overflow: hidden; margin: 12px 0 10px; }
+  .nps-seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; }
+  .nps-legend { display: flex; gap: 16px; flex-wrap: wrap; }
+  .nl-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .nl-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  .compare-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .compare-header { padding: 14px 18px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .compare-title { font-size: 13px; font-weight: 500; }
+  .compare-nps { font-family: 'DM Serif Display', serif; font-size: 26px; }
+  .cr { display: flex; justify-content: space-between; align-items: center; padding: 8px 18px; }
+  .cr:not(:last-child) { border-bottom: 1px solid var(--surface2); }
+  .cr-label { font-size: 12px; color: var(--text2); }
+  .cr-val { font-size: 13px; font-weight: 500; }
+
+  .sub-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .sub-tab { padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text2); transition: all .15s; font-family: 'DM Sans', sans-serif; }
+  .sub-tab:hover { background: var(--surface2); }
+  .sub-tab.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .sub-panel { display: none; }
+  .sub-panel.active { display: block; }
+  .sess-table { width: 100%; border-collapse: collapse; }
+  .sess-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .sess-table td { padding: 10px 12px; border-bottom: 1px solid var(--surface2); font-size: 13px; }
+  .sess-table tr:last-child td { border-bottom: none; }
+  .sess-score { text-align: right; font-weight: 600; }
+  .sess-score.top { color: var(--green); }
+  .sess-score.low { color: var(--red); }
+  .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .bar-mini { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .bar-inner { height: 4px; border-radius: 2px; }
+
+  .issue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+  .issue-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; gap: 12px; }
+  .issue-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .issue-icon.red { background: var(--red-light); }
+  .issue-icon.amber { background: var(--amber-light); }
+  .issue-icon.grey { background: var(--surface2); }
+
+  .quotes-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .quote-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .quote-mark { font-family: 'DM Serif Display', serif; font-size: 44px; line-height: 0.5; color: var(--border); margin-bottom: 12px; display: block; }
+  .quote-text { font-size: 13px; line-height: 1.65; color: var(--text2); font-style: italic; }
+
+  .callout { border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; font-size: 13px; line-height: 1.6; }
+  .callout-amber { background: var(--amber-light); border: 1px solid #F6D860; color: #92400E; }
+  .callout-green { background: var(--green-light); border: 1px solid #86EFAC; color: #14532D; }
+  .callout-blue { background: var(--blue-light); border: 1px solid #93C5FD; color: #1E3A5F; }
+
+  /* SALES PAGE TAB */
+  .critique-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .critique-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 10px 14px; text-align: left; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  .critique-table td { padding: 12px 14px; border-bottom: 1px solid var(--surface2); font-size: 13px; vertical-align: top; line-height: 1.6; background: var(--surface); }
+  .critique-table tr:last-child td { border-bottom: none; }
+  .old { color: var(--red); font-style: italic; }
+  .new { color: var(--green); font-weight: 500; }
+  .zone { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text3); }
+
+  .priority-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 10px; display: flex; gap: 14px; }
+  .priority-num { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--border); line-height: 1; width: 28px; flex-shrink: 0; padding-top: 2px; }
+  .priority-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .priority-body { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .priority-body em { font-style: normal; color: var(--text); font-weight: 500; }
+
+  /* EMAIL TAB */
+  .email-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .email-header { padding: 14px 18px; display: flex; gap: 12px; align-items: flex-start; cursor: pointer; user-select: none; }
+  .email-header:hover { background: var(--surface2); }
+  .email-day-badge { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; flex-shrink: 0; white-space: nowrap; margin-top: 2px; }
+  .email-subject { font-size: 13px; font-weight: 500; flex: 1; }
+  .email-goal { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .email-toggle { font-size: 16px; color: var(--text3); transition: transform .2s; flex-shrink: 0; margin-top: 2px; }
+  .email-body { padding: 18px; display: none; border-top: 1px solid var(--surface2); }
+  .email-body.open { display: block; }
+  .email-card.open .email-toggle { transform: rotate(180deg); }
+  .email-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .email-meta-item { background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
+  .email-meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 4px; }
+  .email-meta-val { font-size: 12px; color: var(--text); }
+  .email-copy { background: var(--surface2); border-radius: 8px; padding: 14px 16px; font-size: 12px; line-height: 1.8; color: var(--text2); white-space: pre-wrap; font-family: 'DM Sans', sans-serif; }
+  .email-copy strong { color: var(--text); font-weight: 500; }
+
+  /* PLATFORM TAB */
+  .platform-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .platform-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .platform-name { font-size: 14px; font-weight: 500; }
+  .platform-sub { font-size: 11px; color: var(--text3); }
+  .msg-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; }
+  .msg-timing { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 4px; }
+  .msg-purpose { font-size: 11px; color: var(--text2); margin-bottom: 8px; font-style: italic; }
+  .msg-copy { font-size: 12px; line-height: 1.75; color: var(--text); background: var(--surface2); padding: 10px 12px; border-radius: 6px; white-space: pre-wrap; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .push-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+  .sms-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+
+  footer { padding: 20px 48px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); }
+
+  @media (max-width: 720px) {
+    .header, .pane { padding-left: 20px; padding-right: 20px; }
+    .nav { padding: 0 20px; }
+    .grid-3, .grid-2, .day-cards, .issue-grid, .quotes-row, .two-col, .push-grid, .sms-grid { grid-template-columns: 1fr; }
+    .email-meta { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <div class="header-eyebrow">Mindvalley · Post-Summit Analysis & Recommendations</div>
+      <div class="header-title">AI Summit 2026<br><em style="opacity:.65;font-size:.72em">Survey Insights + Sales Strategy</em></div>
+    </div>
+    <div class="header-meta">March 2026<br>527 responses<br>3 days</div>
+  </div>
+  <div class="header-stats">
+    <div><div class="hs-num">52.4</div><div class="hs-label">Overall NPS</div></div>
+    <div><div class="hs-num">81%</div><div class="hs-label">CSAT Satisfied</div></div>
+    <div><div class="hs-num">67.2</div><div class="hs-label">VIP NPS</div></div>
+    <div><div class="hs-num">4.59</div><div class="hs-label">Top Session</div></div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-tab active" onclick="showPane('survey',this)">Survey Insights</button>
+  <button class="nav-tab" onclick="showPane('salespage',this)">Sales Page Recs</button>
+  <button class="nav-tab" onclick="showPane('email',this)">10-Day Email Sequence</button>
+  <button class="nav-tab" onclick="showPane('platform',this)">Platform Comms</button>
+</div>
+
+<!-- PANE 1: SURVEY -->
+<div id="pane-survey" class="pane active">
+  <div class="section-label">Overall performance</div>
+  <div class="grid-3">
+    <div class="card card-sm"><div class="card-label">Net Promoter Score</div><div class="card-value" style="color:var(--green)">52.4</div><div class="card-sub">Benchmark: 50+ is strong</div></div>
+    <div class="card card-sm"><div class="card-label">CSAT Satisfaction</div><div class="card-value" style="color:var(--blue)">81%</div><div class="card-sub">Rated 4–5 · avg 4.28 / 5</div></div>
+    <div class="card card-sm"><div class="card-label">Total Responses</div><div class="card-value">527</div><div class="card-sub">Days 1–3 combined</div></div>
+  </div>
+
+  <div class="nps-block">
+    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500">NPS respondent breakdown</span><span style="font-size:12px;color:var(--text3)">n = 527</span></div>
+    <div class="nps-bar-full">
+      <div class="nps-seg" style="flex:67.9;background:var(--green)">68%</div>
+      <div class="nps-seg" style="flex:16.5;background:#C8B99A">17%</div>
+      <div class="nps-seg" style="flex:15.6;background:var(--red)">16%</div>
+    </div>
+    <div class="nps-legend">
+      <div class="nl-item"><div class="nl-dot" style="background:var(--green)"></div>Promoters (9–10) · 358 people</div>
+      <div class="nl-item"><div class="nl-dot" style="background:#C8B99A"></div>Passives (7–8) · 87 people</div>
+      <div class="nl-item"><div class="nl-dot" style="background:var(--red)"></div>Detractors (0–6) · 82 people</div>
+    </div>
+  </div>
+
+  <div class="section-label">NPS by day</div>
+  <div class="day-cards">
+    <div class="day-card"><div class="badge badge-grey" style="margin-bottom:10px">Day 1</div><div class="day-name">The AI Paradigm Shift</div><div class="day-nps">46.3</div><div class="progress-track"><div class="progress-fill" style="width:46.3%;background:var(--text3)"></div></div><div class="day-meta">n = 337 · Detractors 9%</div></div>
+    <div class="day-card best"><div class="badge badge-green" style="margin-bottom:10px">Day 2 · Best</div><div class="day-name">Create and Build Your Teams</div><div class="day-nps" style="color:var(--green)">71.7</div><div class="progress-track"><div class="progress-fill" style="width:71.7%;background:var(--green)"></div></div><div class="day-meta" style="color:var(--green)">n = 99 · Summit high · Detractors 6%</div></div>
+    <div class="day-card"><div class="badge badge-blue" style="margin-bottom:10px">Day 3</div><div class="day-name">From Learner to AI Builder</div><div class="day-nps">53.8</div><div class="progress-track"><div class="progress-fill" style="width:53.8%;background:var(--blue)"></div></div><div class="day-meta">n = 91 · Detractors 10%</div></div>
+  </div>
+
+  <div class="section-label">VIP attendee analysis</div>
+  <div class="grid-2">
+    <div class="compare-card">
+      <div class="compare-header"><div><div class="compare-title">VIP attendees</div><div style="font-size:11px;color:var(--text3)">n = 131</div></div><div class="compare-nps" style="color:var(--green)">67.2</div></div>
+      <div><div class="cr"><span class="cr-label">CSAT satisfied (4–5)</span><span class="cr-val" style="color:var(--green)">87%</span></div><div class="cr"><span class="cr-label">Avg CSAT</span><span class="cr-val">4.49 / 5</span></div><div class="cr"><span class="cr-label">Promoters</span><span class="cr-val" style="color:var(--green)">75%</span></div><div class="cr"><span class="cr-label">Detractors</span><span class="cr-val">8%</span></div><div class="cr"><span class="cr-label">Day 1 VIP Q&A</span><span class="cr-val">4.46 / 5</span></div><div class="cr"><span class="cr-label">Day 2 VIP Q&A</span><span class="cr-val">4.44 / 5</span></div></div>
+    </div>
+    <div class="compare-card">
+      <div class="compare-header"><div><div class="compare-title">Non-VIP attendees</div><div style="font-size:11px;color:var(--text3)">n = 305</div></div><div class="compare-nps" style="color:var(--text2)">45.6</div></div>
+      <div><div class="cr"><span class="cr-label">CSAT satisfied (4–5)</span><span class="cr-val">78%</span></div><div class="cr"><span class="cr-label">Avg CSAT</span><span class="cr-val">4.18 / 5</span></div><div class="cr"><span class="cr-label">Promoters</span><span class="cr-val">65%</span></div><div class="cr"><span class="cr-label">Detractors</span><span class="cr-val" style="color:var(--red)">20%</span></div><div class="cr"><span class="cr-label">Day 1 VIP Q&A</span><span class="cr-val" style="color:var(--text3)">—</span></div><div class="cr"><span class="cr-label">Day 2 VIP Q&A</span><span class="cr-val" style="color:var(--text3)">—</span></div></div>
+    </div>
+  </div>
+  <div class="callout callout-amber"><strong>VIP detractor note:</strong> Only 10 of 131 VIP respondents scored 0–6. Complaints cluster around access failures and replay gaps — not content quality. Fixing these operationally would likely push VIP NPS past 75.</div>
+
+  <div class="section-label">Session ratings</div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="showSess('d1',this)">Day 1</button>
+      <button class="sub-tab" onclick="showSess('d2',this)">Day 2</button>
+      <button class="sub-tab" onclick="showSess('d3',this)">Day 3</button>
+    </div>
+    <div id="sess-d1" class="sub-panel active">
+      <table class="sess-table"><thead><tr><th>Session</th><th>n</th><th>Bar</th><th style="text-align:right">Avg</th></tr></thead><tbody>
+        <tr><td>AI first blueprint</td><td style="color:var(--text3);font-size:12px">337</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:84%;background:var(--blue)"></div></div></div></td><td class="sess-score">4.20</td></tr>
+        <tr><td>Your first AI experiment</td><td style="color:var(--text3);font-size:12px">337</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:81.4%;background:var(--blue)"></div></div></div></td><td class="sess-score">4.07</td></tr>
+        <tr><td>Build your second brain ★</td><td style="color:var(--text3);font-size:12px">337</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:86.4%;background:var(--blue)"></div></div></div></td><td class="sess-score top">4.32</td></tr>
+        <tr><td>Real life example: automating emails</td><td style="color:var(--text3);font-size:12px">337</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:80.8%;background:var(--blue)"></div></div></div></td><td class="sess-score">4.04</td></tr>
+        <tr><td>The creative session</td><td style="color:var(--text3);font-size:12px">337</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:82.6%;background:var(--blue)"></div></div></div></td><td class="sess-score">4.13</td></tr>
+        <tr><td>VIP Q&A (Day 1)</td><td style="color:var(--text3);font-size:12px">95</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:89.2%;background:var(--green)"></div></div></div></td><td class="sess-score top">4.46</td></tr>
+      </tbody></table>
+    </div>
+    <div id="sess-d2" class="sub-panel">
+      <table class="sess-table"><thead><tr><th>Session</th><th>n</th><th>Bar</th><th style="text-align:right">Avg</th></tr></thead><tbody>
+        <tr><td>How AI rewrites the entrepreneur's playbook</td><td style="color:var(--text3);font-size:12px">99</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:90.2%;background:var(--green)"></div></div></div></td><td class="sess-score top">4.51</td></tr>
+        <tr><td>How I scaled my identity (AI team)</td><td style="color:var(--text3);font-size:12px">99</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:89.4%;background:var(--green)"></div></div></div></td><td class="sess-score top">4.47</td></tr>
+        <tr><td>Eliza demo ★</td><td style="color:var(--text3);font-size:12px">99</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:90.2%;background:var(--green)"></div></div></div></td><td class="sess-score top">4.51</td></tr>
+        <tr><td>Building your AI workforce ★★</td><td style="color:var(--text3);font-size:12px">99</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:91.8%;background:var(--green)"></div></div></div></td><td class="sess-score top">4.59</td></tr>
+        <tr><td>The offer</td><td style="color:var(--text3);font-size:12px">99</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:87%;background:var(--green)"></div></div></div></td><td class="sess-score top">4.35</td></tr>
+        <tr><td>Laser coaching</td><td style="color:var(--text3);font-size:12px">85</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:87.8%;background:var(--green)"></div></div></div></td><td class="sess-score top">4.39</td></tr>
+        <tr><td>VIP Q&A (Day 2)</td><td style="color:var(--text3);font-size:12px">36</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:88.8%;background:var(--green)"></div></div></div></td><td class="sess-score top">4.44</td></tr>
+      </tbody></table>
+      <div style="font-size:11px;color:var(--text3);padding-top:10px">★★ Highest-rated session of the entire summit</div>
+    </div>
+    <div id="sess-d3" class="sub-panel">
+      <table class="sess-table"><thead><tr><th>Session</th><th>n</th><th>Bar</th><th style="text-align:right">Avg</th></tr></thead><tbody>
+        <tr><td>Session 1</td><td style="color:var(--text3);font-size:12px">91</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:78.4%;background:var(--red)"></div></div></div></td><td class="sess-score low">3.92</td></tr>
+        <tr><td>Session 2</td><td style="color:var(--text3);font-size:12px">91</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:82.2%;background:#888780"></div></div></div></td><td class="sess-score">4.11</td></tr>
+        <tr><td>Session 3</td><td style="color:var(--text3);font-size:12px">91</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:78.2%;background:var(--red)"></div></div></div></td><td class="sess-score low">3.91</td></tr>
+        <tr><td>Session 4</td><td style="color:var(--text3);font-size:12px">91</td><td><div class="bar-wrap"><div class="bar-mini"><div class="bar-inner" style="width:85%;background:#888780"></div></div></div></td><td class="sess-score">4.25</td></tr>
+      </tbody></table>
+      <div style="font-size:11px;color:var(--text3);padding-top:10px">Session names not captured in survey data. Sessions 1 and 3 are the only sub-4.0 ratings in the summit.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Top detractor issues</div>
+  <div class="issue-grid">
+    <div class="issue-card"><div class="issue-icon red">🔌</div><div><div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px"><span style="font-size:17px;font-weight:600;color:var(--red)">~53</span><span style="font-size:11px;color:var(--text3)">mentions</span></div><div style="font-size:12px;font-weight:500">Technical / Zoom access</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Couldn't connect after 20+ attempts. #1 detractor driver.</div></div></div>
+    <div class="issue-card"><div class="issue-icon amber">📹</div><div><div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px"><span style="font-size:17px;font-weight:600;color:var(--amber)">~16</span><span style="font-size:11px;color:var(--text3)">mentions</span></div><div style="font-size:12px;font-weight:500">No replays available</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Paid VIP expecting recordings. Nothing posted.</div></div></div>
+    <div class="issue-card"><div class="issue-icon amber">📣</div><div><div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px"><span style="font-size:17px;font-weight:600;color:var(--amber)">~13</span><span style="font-size:11px;color:var(--text3)">mentions</span></div><div style="font-size:12px;font-weight:500">Day 3 pitch fatigue</div><div style="font-size:11px;color:var(--text3);margin-top:2px">"First 1.5 hours felt like an infomercial."</div></div></div>
+    <div class="issue-card"><div class="issue-icon grey">⏱</div><div><div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px"><span style="font-size:17px;font-weight:600">~10</span><span style="font-size:11px;color:var(--text3)">mentions</span></div><div style="font-size:12px;font-weight:500">Pacing mismatch</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Advertised as beginner-friendly but felt advanced.</div></div></div>
+    <div class="issue-card"><div class="issue-icon grey">🌏</div><div><div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px"><span style="font-size:17px;font-weight:600">~8</span><span style="font-size:11px;color:var(--text3)">mentions</span></div><div style="font-size:12px;font-weight:500">Timezone friction</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Australia/NZ attending from 1–4am. No replay fallback.</div></div></div>
+    <div class="issue-card"><div class="issue-icon red">🔑</div><div><div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px"><span style="font-size:17px;font-weight:600;color:var(--red)">~6</span><span style="font-size:11px;color:var(--text3)">mentions</span></div><div style="font-size:12px;font-weight:500">VIP access not delivered</div><div style="font-size:11px;color:var(--text3);margin-top:2px">"I paid for VIP and couldn't access the link."</div></div></div>
+  </div>
+
+  <div class="section-label">Verbatim highlights</div>
+  <div class="quotes-row">
+    <div class="quote-card"><span class="quote-mark">"</span><div class="quote-text">Watching Vishen demo the AI Diary where Eliza reflected his own patterns back to him — calling out his avoidance, his procrastination, his brilliance in the same breath. That's exactly what I do with my clients. I need this.</div><span class="badge badge-green" style="margin-top:12px;display:inline-block">VIP Promoter</span></div>
+    <div class="quote-card"><span class="quote-mark">"</span><div class="quote-text">It showed me how I can become more independent, self-sufficient and take power back in areas of technology that felt too complex. I feel I don't need to rely on anyone else for tech anymore.</div><span class="badge badge-blue" style="margin-top:12px;display:inline-block">Non-VIP Promoter</span></div>
+    <div class="quote-card"><span class="quote-mark">"</span><div class="quote-text">I put the weekend aside and purchased VIP access so I could watch recordings in the afternoon. However, nothing was or is posted. Frustrating. I suggest letting people know before they purchase.</div><span class="badge badge-red" style="margin-top:12px;display:inline-block">VIP Detractor</span></div>
+    <div class="quote-card"><span class="quote-mark">"</span><div class="quote-text">Daniel's session, including trends and opportunities. Honestly, this entire Summit is blowing my mind. I have to take a walk after each day just to process and come down from the experience.</div><span class="badge badge-green" style="margin-top:12px;display:inline-block">VIP Promoter</span></div>
+  </div>
+</div>
+
+<!-- PANE 2: SALES PAGE -->
+<div id="pane-salespage" class="pane">
+  <div style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.7">The current sales page has strong bones — the 5-step sequential method and "a method, not a menu" framing are genuinely good. But it's selling to the wrong emotional state. Survey data points to five specific changes that would meaningfully lift conversion.</div>
+
+  <div class="section-label">Priority changes — ranked by impact</div>
+
+  <div class="priority-item">
+    <div class="priority-num">1</div>
+    <div>
+      <div class="priority-title">Kill the 0.1% status hook. Lead with relief.</div>
+      <div class="priority-body">The current hero sells prestige. Survey data shows the dominant emotional driver is <em>autonomy and relief</em> — "I don't need to rely on anyone else for tech anymore." Status hooks create FOMO. Relief hooks create genuine desire. Proposed swap:<br><br>
+      <span style="color:var(--red);font-style:italic">"Be in the top 0.1% of Founders, CEOs & Executives Using AI"</span><br>
+      → <span style="color:var(--green);font-weight:500">"Your Fridays aren't going to free themselves."</span><br>
+      Subhead: <em>A 16-week program to build the AI system that runs your business — so you can stop running it into the ground.</em></div>
+    </div>
+  </div>
+
+  <div class="priority-item">
+    <div class="priority-num">2</div>
+    <div>
+      <div class="priority-title">Move Eliza/BlinkLife from bonus to hero proof point</div>
+      <div class="priority-body">The most-cited summit highlight across 527 responses is buried at the bottom as a bonus. It should be the axis of the pitch. Lead with the story: <em>"Vishen built an AI that knows his patterns, his voice, his priorities. It calls out his procrastination. It runs his inbox. You build yours in this program."</em> That's the actual product promise — and it's the most emotionally resonant thing you own.</div>
+    </div>
+  </div>
+
+  <div class="priority-item">
+    <div class="priority-num">3</div>
+    <div>
+      <div class="priority-title">Add a summit-aware bridge section at the top</div>
+      <div class="priority-body">Most visitors arrive from the summit already convinced. The current page re-pitches from scratch as if they're cold leads. Add a 2–3 line bridge: <em>"You've seen the method. You've seen Eliza. You know this works. This is where you build it — your Brain, your Team, your System — with 16 weeks of live coaching and the exact tools Vishen uses daily."</em></div>
+    </div>
+  </div>
+
+  <div class="priority-item">
+    <div class="priority-num">4</div>
+    <div>
+      <div class="priority-title">Rewrite curriculum headers using survey-validated language</div>
+      <div class="priority-body">Current headers are functional labels. Survey feedback gives you the real language — use it in the headers.</div>
+    </div>
+  </div>
+
+  <table class="critique-table" style="margin-top:12px">
+    <thead><tr><th>Current header</th><th>Rewrite (survey-validated)</th></tr></thead>
+    <tbody>
+      <tr><td class="old">Foundations of Applied AI for Work &amp; Life</td><td class="new">Stop getting generic output. Build an AI that actually knows you.</td></tr>
+      <tr><td class="old">Create at Scale Without a Team</td><td class="new">Ship a week's worth of content in a morning. In your voice.</td></tr>
+      <tr><td class="old">Build Your AI Team</td><td class="new">Stop being the bottleneck in your own business.</td></tr>
+      <tr><td class="old">Run the System</td><td class="new">The Friday you've been waiting for. It's built now.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="priority-item">
+    <div class="priority-num">5</div>
+    <div>
+      <div class="priority-title">Fix the VIP replay promise — it's creating broken expectations</div>
+      <div class="priority-body">Survey: <em>"I put the weekend aside and purchased VIP access to watch recordings... nothing was posted. Frustrating."</em> The current "30 days post-summit" framing is vague and generating trust damage. Change to a specific promise: <em>"Replay of each session available within 24 hours."</em> Also lead the VIP upsell with Q&A access (rated 4.44–4.46) rather than recordings — that's the stronger emotional hook.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Full copy swap table</div>
+  <table class="critique-table">
+    <thead><tr><th style="width:15%">Page zone</th><th style="width:42%">Current copy</th><th style="width:43%">Recommended</th></tr></thead>
+    <tbody>
+      <tr><td class="zone">Hero headline</td><td class="old">Be in the top 0.1% of Founders, CEOs &amp; Executives Using AI</td><td class="new">Your Fridays aren't going to free themselves.</td></tr>
+      <tr><td class="zone">Hero subhead</td><td class="old">Scale your income, reduce your workload, and future-proof your business</td><td class="new">A 16-week program to build the AI system that runs your business — so you can stop running it into the ground.</td></tr>
+      <tr><td class="zone">Opening para</td><td class="old">Most entrepreneurs are using AI the same way... still feeling like they're one step behind</td><td class="new">You know AI is powerful. The problem isn't awareness — it's that nobody gave you a system that actually works for YOUR business, in YOUR voice, on YOUR calendar.</td></tr>
+      <tr><td class="zone">VIP benefits lead</td><td class="old">Get recordings of all calls (worth $2,000)</td><td class="new">Live Q&amp;A access — ask your specific questions to Vishen, Noelle, and Vykintas directly. Every session. 16 weeks.</td></tr>
+      <tr><td class="zone">BlinkLife bonus</td><td class="old">Special Bonus: BlinkLife — This is the exact AI tool Vishen built for himself</td><td class="new">Build your own Eliza. The same personal AI system Vishen demos every day — you build yours during the program. Your voice. Your patterns. Your business.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-green"><strong>What to keep as-is:</strong> "A method, not a menu" — strong. The 5-step sequential structure with the "without this, you'll fail in this specific way" format — keep it exactly. The BlinkLife/Eliza asset is the most differentiated thing on the page — it just needs to move up and be renamed to connect to what people experienced at the summit.</div>
+</div>
+
+<!-- PANE 3: EMAIL -->
+<div id="pane-email" class="pane">
+  <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.7">A 10-day post-summit sequence built around three emotional phases the survey data identified. Click any email to expand the full copy.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px">
+    <span class="badge badge-blue">Days 1–3: Momentum — name the shift, anchor the moments</span>
+    <span class="badge badge-amber">Days 4–7: The gap — bridge belief to action</span>
+    <span class="badge badge-red">Days 8–10: Close — urgency without pressure</span>
+  </div>
+
+  <div class="email-card" id="ec1">
+    <div class="email-header" onclick="toggleEmail('ec1')">
+      <span class="email-day-badge badge-blue">Day 1</span>
+      <div style="flex:1"><div class="email-subject">What just happened to you over the last 3 days</div><div class="email-goal">Name the transformation. Re-anchor the summit's key moments. No hard CTA.</div></div>
+      <span class="email-toggle">▾</span>
+    </div>
+    <div class="email-body">
+      <div class="email-meta">
+        <div class="email-meta-item"><div class="email-meta-label">Send timing</div><div class="email-meta-val">Day after summit ends · Morning</div></div>
+        <div class="email-meta-item"><div class="email-meta-label">Primary CTA</div><div class="email-meta-val">None — reflection email only</div></div>
+      </div>
+      <div class="email-copy"><strong>Subject:</strong> What just happened to you (it has a name)
+<strong>Preview:</strong> There's a word for what you experienced. And it changes what's possible.
+
+[First Name],
+
+There's a word for what you've been feeling since the summit ended.
+
+Ontological shock.
+
+It's when your understanding of what's possible fundamentally shifts — and going back to how you saw things before feels genuinely impossible.
+
+One attendee put it perfectly in the post-event survey:
+
+"I was starving to get to know the best tools of AI and be guided. This opened a new universe for me."
+
+That feeling is real. And it matters.
+
+Because the gap between knowing the method and having the system built — that's where most people get stuck.
+
+You saw the 5 steps. You saw Eliza. You watched Manon build a brand from zero in real time.
+
+Now the question is: how much of that actually gets built?
+
+More on that tomorrow.
+
+— Mindvalley</div>
+    </div>
+  </div>
+
+  <div class="email-card" id="ec2">
+    <div class="email-header" onclick="toggleEmail('ec2')">
+      <span class="email-day-badge badge-blue">Day 2</span>
+      <div style="flex:1"><div class="email-subject">The Eliza moment — and what it actually means</div><div class="email-goal">Use the most-cited summit highlight to deepen desire. Bridge to AI Mastery as "the build."</div></div>
+      <span class="email-toggle">▾</span>
+    </div>
+    <div class="email-body">
+      <div class="email-meta">
+        <div class="email-meta-item"><div class="email-meta-label">Send timing</div><div class="email-meta-val">Day 2 post-summit · Afternoon</div></div>
+        <div class="email-meta-item"><div class="email-meta-label">Primary CTA</div><div class="email-meta-val">Soft link to AI Mastery page</div></div>
+      </div>
+      <div class="email-copy"><strong>Subject:</strong> The moment that changed everything (it was Eliza)
+<strong>Preview:</strong> "Off the charts enlightening." Here's what you actually witnessed.
+
+[First Name],
+
+Out of everything at the summit — the demos, the frameworks, the speakers —
+one moment kept coming up in the feedback.
+
+Vishen, showing Eliza.
+
+Not because it was impressive technology.
+
+Because it was personal.
+
+An AI that knew his patterns. That called out his avoidance. That reflected his thinking back at him. That ran his inbox, drafted 103 emails, handled 2,828 communications in a month — while he got on stage with you.
+
+What you witnessed wasn't a product demo.
+
+It was a proof of concept for a different way of working.
+
+The question isn't whether AI can do this. You've seen that it can.
+
+The question is: when do you build yours?
+
+That's what AI Mastery is. The program where you actually build it — your Brain, your Team, your System — with 16 weeks of live coaching and the exact tools you saw on stage.
+
+[See what's included →]
+
+— Vishen & the Mindvalley team</div>
+    </div>
+  </div>
+
+  <div class="email-card" id="ec3">
+    <div class="email-header" onclick="toggleEmail('ec3')">
+      <span class="email-day-badge badge-blue">Day 3</span>
+      <div style="flex:1"><div class="email-subject">The Brain you started building — here's how to finish it</div><div class="email-goal">Activate the "I started building" momentum. Make Mastery feel like the natural continuation.</div></div>
+      <span class="email-toggle">▾</span>
+    </div>
+    <div class="email-body">
+      <div class="email-meta">
+        <div class="email-meta-item"><div class="email-meta-label">Send timing</div><div class="email-meta-val">Day 3 post-summit</div></div>
+        <div class="email-meta-item"><div class="email-meta-label">Primary CTA</div><div class="email-meta-val">AI Mastery enrollment</div></div>
+      </div>
+      <div class="email-copy"><strong>Subject:</strong> You started building your Brain. Here's how to finish it.
+<strong>Preview:</strong> The Second Brain was the most-actioned concept from the summit. Good. Don't stop now.
+
+[First Name],
+
+Something interesting showed up in the post-summit data.
+
+The most-acted-on concept from the entire 3 days?
+
+The Second Brain.
+
+People started building it during the session. On the Zoom. While Vishen was still talking.
+
+If that was you — good. That impulse is the right one.
+
+Here's the honest truth:
+What you built in a session is a foundation. A great one.
+
+But the Brain that actually changes how you work — the one that knows your voice, your decisions, your calendar, your team — that takes more than 90 minutes.
+
+That's Step 2 of the AI-First Method.
+And it's where AI Mastery begins.
+
+Over 16 weeks, you build all five steps:
+Vision → Brain → Create → Team → System
+
+Not as theory. As working infrastructure in your actual business.
+
+The next intake starts April 8th.
+
+[See what you'd build →]
+
+— Mindvalley</div>
+    </div>
+  </div>
+
+  <div class="email-card" id="ec4">
+    <div class="email-header" onclick="toggleEmail('ec4')">
+      <span class="email-day-badge badge-amber">Day 5</span>
+      <div style="flex:1"><div class="email-subject">The gap between "I get it" and "it's built"</div><div class="email-goal">Name the specific implementation gap. Position AI Mastery as the bridge.</div></div>
+      <span class="email-toggle">▾</span>
+    </div>
+    <div class="email-body">
+      <div class="email-meta">
+        <div class="email-meta-item"><div class="email-meta-label">Send timing</div><div class="email-meta-val">Day 5 post-summit</div></div>
+        <div class="email-meta-item"><div class="email-meta-label">Primary CTA</div><div class="email-meta-val">AI Mastery enrollment</div></div>
+      </div>
+      <div class="email-copy"><strong>Subject:</strong> "I get it" is not the same as "it's built"
+<strong>Preview:</strong> There's a specific gap between the summit and the system. Here's what fills it.
+
+[First Name],
+
+The summit was designed to do one thing:
+
+Show you that the AI-First Method works. Show you the complete picture.
+
+And from the response, it did exactly that.
+
+But here's the gap we've seen consistently — across thousands of people who've been through this before:
+
+The summit gives you the what and the why.
+
+Nobody gives you the how, in your actual business, with your actual context, with someone to answer your specific questions in real time.
+
+That's the gap that AI Mastery fills.
+
+32 live sessions over 16 weeks.
+Vishen, Noelle, Vykintas — building alongside you.
+Not watching demos. Building.
+
+One attendee from last year's cohort:
+"I now have a working AI system that handles my inbox, drafts my content, and triages my client work. I get my Fridays back most weeks."
+
+That's the to-done list, not the to-do list.
+
+[Start building it with us →]</div>
+    </div>
+  </div>
+
+  <div class="email-card" id="ec5">
+    <div class="email-header" onclick="toggleEmail('ec5')">
+      <span class="email-day-badge badge-amber">Day 7</span>
+      <div style="flex:1"><div class="email-subject">An honest question from Vishen</div><div class="email-goal">Pattern interrupt — short, personal, direct. Re-engages cold opens.</div></div>
+      <span class="email-toggle">▾</span>
+    </div>
+    <div class="email-body">
+      <div class="email-meta">
+        <div class="email-meta-item"><div class="email-meta-label">Send timing</div><div class="email-meta-val">Day 7 post-summit</div></div>
+        <div class="email-meta-item"><div class="email-meta-label">Primary CTA</div><div class="email-meta-val">Reply or AI Mastery link</div></div>
+      </div>
+      <div class="email-copy"><strong>Subject:</strong> An honest question from me
+<strong>Preview:</strong> You don't have to answer. But you should probably think about it.
+
+[First Name],
+
+Quick, honest question.
+
+One week ago, you left the summit knowing the 5 steps. You'd seen what was possible. You had the paradigm shift.
+
+What's been built since?
+
+Not judging — this is the pattern. The excitement is real. The intention is real. But intention without structure fades fast.
+
+The people who build the system aren't more motivated or more technical than you. They just have a structure that moves them forward every week, with people who catch them when they stall.
+
+That's the only thing AI Mastery adds that you can't do alone.
+
+If you're ready to actually build it:
+[Join AI Mastery — next intake April 8th]
+
+— Vishen</div>
+    </div>
+  </div>
+
+  <div class="email-card" id="ec6">
+    <div class="email-header" onclick="toggleEmail('ec6')">
+      <span class="email-day-badge badge-red">Day 9</span>
+      <div style="flex:1"><div class="email-subject">48 hours — and the one thing that makes the difference</div><div class="email-goal">Genuine urgency. Address the "I can figure this out myself" objection directly.</div></div>
+      <span class="email-toggle">▾</span>
+    </div>
+    <div class="email-body">
+      <div class="email-meta">
+        <div class="email-meta-item"><div class="email-meta-label">Send timing</div><div class="email-meta-val">Day 9 · Morning</div></div>
+        <div class="email-meta-item"><div class="email-meta-label">Primary CTA</div><div class="email-meta-val">AI Mastery enrollment — closing message</div></div>
+      </div>
+      <div class="email-copy"><strong>Subject:</strong> 48 hours left (and the honest difference between people who build vs. don't)
+<strong>Preview:</strong> It's not motivation. It's not even time. It's this.
+
+[First Name],
+
+AI Mastery early enrollment closes in 48 hours.
+
+Here's the honest difference between people who build the system and those who stay in "I should do this" mode.
+
+It's not intelligence. Not technical skill. Not even time.
+
+It's accountability and a clear next step every single week.
+
+Without that: tools pile up. Tabs multiply. Intention stays intention.
+
+With it: by week 4 you have a Brain that knows your business. By week 8 you have AI handling your inbox. By week 16 you have a system — running.
+
+The summit showed you the complete picture.
+
+AI Mastery is where you build it. All five steps. In your actual business. With us.
+
+April 8th. 32 live sessions. 16 weeks.
+
+[Secure your spot before enrollment closes →]
+
+— Vishen & the Mindvalley team
+
+P.S. The live Q&A access is what rated highest at the summit. Every question about your specific setup, answered in real time. That's yours for all 16 weeks.</div>
+    </div>
+  </div>
+
+  <div class="email-card" id="ec7">
+    <div class="email-header" onclick="toggleEmail('ec7')">
+      <span class="email-day-badge badge-red">Day 10</span>
+      <div style="flex:1"><div class="email-subject">Last call (no replay on this one either)</div><div class="email-goal">Final close. Callback to the no-replay summit moment — knowing wink, not manipulation.</div></div>
+      <span class="email-toggle">▾</span>
+    </div>
+    <div class="email-body">
+      <div class="email-meta">
+        <div class="email-meta-item"><div class="email-meta-label">Send timing</div><div class="email-meta-val">Day 10 · Evening</div></div>
+        <div class="email-meta-item"><div class="email-meta-label">Primary CTA</div><div class="email-meta-val">Final enrollment CTA</div></div>
+      </div>
+      <div class="email-copy"><strong>Subject:</strong> Last call (no replay on this one)
+<strong>Preview:</strong> You know what that means.
+
+[First Name],
+
+Enrollment in AI Mastery closes tonight.
+
+No replay. You know how that goes.
+
+If you've been on the fence, here's the simplest version of the decision:
+
+You either build this system now, with structure and live support —
+or you build it alone, on your own timeline, when things get busy.
+
+One of those happens. The other usually doesn't.
+
+The summit gave you the belief. The method gave you the map.
+
+This is where you build it.
+
+[Join AI Mastery — closes tonight →]
+
+— Vishen</div>
+    </div>
+  </div>
+</div>
+
+<!-- PANE 4: PLATFORM -->
+<div id="pane-platform" class="pane">
+  <div style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.7">Platform comms for the 10-day window. Each channel plays a distinct role: <strong style="color:var(--text)">WhatsApp</strong> does the emotional work — intimate, Vishen voice, no hard sell until Day 7. <strong style="color:var(--text)">Six community</strong> builds momentum through peer activation. <strong style="color:var(--text)">Push + SMS</strong> are urgency amplifiers only — short and direct, no storytelling.</div>
+
+  <div class="two-col">
+    <div>
+      <div class="platform-header">
+        <div class="platform-icon" style="background:#DCF8C6">💬</div>
+        <div><div class="platform-name">WhatsApp channel</div><div class="platform-sub">No limit · conversational · Vishen voice</div></div>
+      </div>
+      <div class="msg-card">
+        <div class="msg-timing">Day 1 post-summit</div>
+        <div class="msg-purpose">Name the feeling. Re-anchor the experience.</div>
+        <div class="msg-copy">That's a wrap on AIS26. 🙏
+
+I keep seeing one phrase in the messages you're sending: "my mind is blown."
+
+There's a name for that. Ontological shock. When what's possible fundamentally shifts and you can't go back.
+
+That's what happened over the last 3 days. And it's just the beginning.
+
+The brain you started building? Don't stop. That's where it all compounds.</div>
+      </div>
+      <div class="msg-card">
+        <div class="msg-timing">Day 3</div>
+        <div class="msg-purpose">Soft Mastery mention — no hard sell</div>
+        <div class="msg-copy">Quick question.
+
+One week from today — how much of what you saw at the summit will be built?
+
+The difference between the summit and the system isn't motivation. It's structure.
+
+If you want the structure: AI Mastery opens April 8th. 16 weeks, 32 live sessions. We build it together.
+
+Link in bio if you want to see what's included.</div>
+      </div>
+      <div class="msg-card">
+        <div class="msg-timing">Day 7</div>
+        <div class="msg-purpose">Urgency without hype</div>
+        <div class="msg-copy">48 hours left on AI Mastery early enrollment.
+
+Not going to oversell this.
+
+You either want the structure to build it, or you don't. Both are valid.
+
+But if you're in "I should do this soon" mode — this is the prompt.
+
+[Link to AI Mastery]</div>
+      </div>
+      <div class="msg-card">
+        <div class="msg-timing">Day 10 · close day</div>
+        <div class="msg-purpose">Final call — light, not pressure</div>
+        <div class="msg-copy">Last call for AI Mastery tonight.
+
+You saw what's possible. The Brain, the Team, the System. The 5 steps working together.
+
+Mastery is where you stop watching it happen for other people and build it for yourself.
+
+Enrollment closes tonight. No extensions.
+
+[Link]</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="platform-header">
+        <div class="platform-icon" style="background:#E0E7FF">6️⃣</div>
+        <div><div class="platform-name">Six community platform</div><div class="platform-sub">No limit · community tone · peer activation</div></div>
+      </div>
+      <div class="msg-card">
+        <div class="msg-timing">Day 1 post-summit</div>
+        <div class="msg-purpose">Community activation — prompt sharing, not selling</div>
+        <div class="msg-copy">🧠 Post-summit thread: What was your moment?
+
+We've read hundreds of responses from the summit. The one that keeps coming up: The Eliza demo. The Second Brain. The moment the whole method clicked.
+
+What was yours? Drop it below.
+
+This community is full of people who felt the same shift — and hearing each other's moments is part of how it compounds.</div>
+      </div>
+      <div class="msg-card">
+        <div class="msg-timing">Day 4</div>
+        <div class="msg-purpose">Progress accountability — build momentum, social proof</div>
+        <div class="msg-copy">👋 Check-in: What have you built since the summit?
+
+No judgment if the answer is "not much yet." That's honest and normal.
+
+But for those who've started: share it here. Even one thing. Even small.
+
+Because watching someone else make progress is often the thing that unsticks you.
+
+What's one thing you've implemented from AIS26?</div>
+      </div>
+      <div class="msg-card">
+        <div class="msg-timing">Day 6</div>
+        <div class="msg-purpose">Soft Mastery context — community framing, not sales</div>
+        <div class="msg-copy">For those asking about AI Mastery — honest answer:
+
+The summit gives you the complete picture of the method. Mastery gives you 16 weeks to build it — with live Q&A, a cohort, and coaching on your specific situation.
+
+It's the difference between understanding the blueprints and having someone on-site while you build.
+
+Enrollment closes April 5th. Happy to answer questions here.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">App push & web push</div>
+  <div style="font-size:12px;color:var(--text3);margin-bottom:12px">App push body max 100 chars · Web push body max 40 chars · Title max 30 chars</div>
+  <div class="push-grid">
+    <div class="msg-card"><div class="msg-timing">Day 1 · App push</div><div class="msg-copy"><strong>Title:</strong> The summit is over
+<strong>Body:</strong> The shift happened. Now comes the build. See what AI Mastery covers →</div></div>
+    <div class="msg-card"><div class="msg-timing">Day 1 · Web push</div><div class="msg-copy"><strong>Title:</strong> AIS26 wrap
+<strong>Body:</strong> Your Brain won't build itself.</div></div>
+    <div class="msg-card"><div class="msg-timing">Day 5 · App push</div><div class="msg-copy"><strong>Title:</strong> Still only using ChatGPT?
+<strong>Body:</strong> 64% of summit attendees are. AI Mastery changes that in 16 weeks. →</div></div>
+    <div class="msg-card"><div class="msg-timing">Day 5 · Web push</div><div class="msg-copy"><strong>Title:</strong> Build your Brain
+<strong>Body:</strong> AI Mastery opens April 8th.</div></div>
+    <div class="msg-card"><div class="msg-timing">Day 9 · App push</div><div class="msg-copy"><strong>Title:</strong> 48 hrs: AI Mastery
+<strong>Body:</strong> Enrollment closes Sunday. No extensions. Build the system you saw on stage. →</div></div>
+    <div class="msg-card"><div class="msg-timing">Day 10 · Web push</div><div class="msg-copy"><strong>Title:</strong> Last call tonight
+<strong>Body:</strong> No replay on this one.</div></div>
+  </div>
+
+  <div class="section-label">SMS (70–90 chars)</div>
+  <div class="sms-grid">
+    <div class="msg-card"><div class="msg-timing">Day 2</div><div class="msg-copy">The Brain you saw at AIS26 — build yours. AI Mastery opens April 8. mindvalley.com/mastery/ai</div></div>
+    <div class="msg-card"><div class="msg-timing">Day 7</div><div class="msg-copy">AIS26 attendee: 48hrs left on AI Mastery early enrollment. Don't let the shift fade. [link]</div></div>
+    <div class="msg-card"><div class="msg-timing">Day 10</div><div class="msg-copy">Last call — AI Mastery closes tonight. No replay. mindvalley.com/mastery/ai</div></div>
+  </div>
+
+  <div class="callout callout-blue"><strong>Channel strategy note:</strong> WhatsApp and Six do the emotional work — maintaining connection and warming the audience. Email does the conversion work — each email has a specific job keyed to the decision journey. Push and SMS are urgency amplifiers only: short, direct, no frills. Don't use push for storytelling — save that for email and WhatsApp where it has room to land.</div>
+</div>
+
+<footer>AIS26 Post-Summit Survey + Sales Strategy · 527 responses · March 2026 · Mindvalley AI Summit</footer>
+
+<script>
+function showPane(id, btn) {
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function showSess(day, btn) {
+  document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('sess-' + day).classList.add('active');
+  btn.classList.add('active');
+}
+function toggleEmail(id) {
+  const card = document.getElementById(id);
+  const body = card.querySelector('.email-body');
+  const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.email-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.email-card').forEach(c => c.classList.remove('open'));
+  if (!isOpen) { body.classList.add('open'); card.classList.add('open'); }
+}
+</script>
+</body>
+</html>
